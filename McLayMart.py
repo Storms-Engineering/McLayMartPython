@@ -21,40 +21,41 @@ def load_database(fileName):
             "part_num": data[2].strip()
         }
         database.append(dataDict)
-
+    f.close()
 
 def main(stdscr):
+    #Setup curses colors
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    stdscr.attron(curses.color_pair(1))
 
-    print(database)
-    time.sleep(1)
     # Clear screen
     stdscr.clear()
-    '''
     stdscr.addstr("Welcome to McClayMart!")
     stdscr.addstr(1, 0, "Created by Storms-Engineering")
+    stdscr.addstr(2, 0, "Loading database...")
     stdscr.refresh()
-    curses.beep();
+    time.sleep(2)
     stdscr.clear()
-    stdscr.addstr(1, 0, "Loading database...")
-    '''
+    
     #Load ssp data
     load_database("ssp_data.csv")
 
-    #Main loop
-    while True:
-        
-        
-        curses.echo()
-        curses.start_color()
-        curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
-        curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
-        curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+   
+    curses.echo()
+    
 
-        stdscr.attron(curses.color_pair(1))
-        '''
+    #Main loop
+    while True: 
+        items_purchased = list()
+        stdscr.clear()
         stdscr.addstr("Please enter name:")
         stdscr.refresh()
         name = stdscr.getstr().decode(encoding="utf-8")
+        if name == "exit":
+            exit()
         stdscr.clear()
         stdscr.addstr("Enter cost center:")
         stdscr.refresh()
@@ -62,8 +63,8 @@ def main(stdscr):
         stdscr.clear()
         title = "Name:{}  Cost Center:{}".format(name, costCenter)
         stdscr.addstr(0,0,title)
-        '''
-        stdscr.addstr(1,0,"Please begin scanning items.")
+        stdscr.addstr(1,0,"Please begin scanning items. Press Enter with an empty part number to finish.")
+        stdscr.addstr(2,0, "Enter part num:")
         stdscr.addstr(3,0,"Item #")
         stdscr.addstr(3,30,"Description")
         #stdscr.addstr(3,100,"Quantity")
@@ -73,8 +74,9 @@ def main(stdscr):
         stdscr.refresh()
         
         #Sub loop for scanning items
-        stdscr.move(2,0)
-        item_num = stdscr.getstr().decode(encoding="utf-8")
+        stdscr.move(2,15)
+        #We have to remove dashes because they are not dashed in the database
+        item_num = stdscr.getstr().decode(encoding="utf-8").replace("-","")
         item_count = 0;
         while item_num != "":
             item_pad.move(item_count,0)
@@ -87,6 +89,7 @@ def main(stdscr):
                     #Print out information about part
                     #TODO eventually update quantity instead of having duplicate lines oh yeah bb
                     desc =  item["description"]
+                    items_purchased.append(item)
                     break
             if desc == "":
             #If we don't find it ask for a description
@@ -96,6 +99,14 @@ def main(stdscr):
                 stdscr.addstr("Please enter description for item:")
                 stdscr.refresh()
                 desc = stdscr.getstr().decode(encoding="utf-8")
+                #We need to manually add this item since it is not in the database for file writing purposes
+                dataDict = {
+                    "sap_num" : "N/A",
+                    "description": desc,
+                    "part_num": item_num
+                    }
+                items_purchased.append(dataDict)
+
                     
             item_pad.addstr(item_count, 30, desc)
             # Displays a section of the pad in the middle of the screen.
@@ -105,30 +116,24 @@ def main(stdscr):
             # (20, 75) : coordinate of lower-right corner of window area to be
             #          : filled with pad content.
             item_pad.refresh( 0,0, 5,1, 35,150)
-            stdscr.move(2,0)
-            stdscr.addstr("")
+            stdscr.addstr(2,0, "Enter part num:")
             stdscr.clrtoeol()
             stdscr.refresh()
             item_num = "";
             item_num = stdscr.getstr().decode(encoding="utf-8")
             item_count += 1
 
-        #Probably won't use this method
-        #It will double echo if we don't turn this off
-        '''
-        curses.noecho()
-        editwin = curses.newwin(5,30, 2,1)
-        
-        
-        
-        box = Textbox(editwin)
 
-        # Let the user edit until Ctrl-G is struck.
-        box.edit()
-
-        # Get resulting contents
-        items = box.gather()'''
-        exit();
+        #Write out items_purchased to file
+        f = open("items_purchased.csv", "a")
+        #f.write("SAP #, Description, Part Num, Cost Center/AFE, Name \n")
+        for item in items_purchased:
+            f.write(item["sap_num"] + "," + item["description"] + "," + item["part_num"] + "," + costCenter + "," + name + "\n")
+        f.close()
+        stdscr.clear();
+        stdscr.addstr(1,0, "Thanks for you purchase, items added to database.")
+        stdscr.refresh()
+        time.sleep(2)
     
 wrapper(main)
 

@@ -76,7 +76,7 @@ def main(stdscr):
         #Sub loop for scanning items
         stdscr.move(2,15)
         #We have to remove dashes because they are not dashed in the database
-        item_num = stdscr.getstr().decode(encoding="utf-8").replace("-","")
+        item_num = stdscr.getstr().decode(encoding="utf-8").replace("-","").upper()
         item_count = 0;
         while item_num != "":
             item_pad.move(item_count,0)
@@ -120,7 +120,7 @@ def main(stdscr):
             stdscr.clrtoeol()
             stdscr.refresh()
             item_num = "";
-            item_num = stdscr.getstr().decode(encoding="utf-8")
+            item_num = stdscr.getstr().decode(encoding="utf-8").upper()
             item_count += 1
 
 
